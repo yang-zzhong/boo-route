@@ -82,6 +82,7 @@ boo.location = function(on_changed) {
   boo.location.onchange = on_changed;
   window.addEventListener("location-changed", boo.location.reload);
   window.addEventListener("popstate", boo.location.reload);
+  boo.location.reload();
 };
 
 boo.location.go = function(url) {
