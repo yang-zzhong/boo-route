@@ -1,5 +1,5 @@
 
-var boo = boo || {};
+window.boo = window.boo || {};
 
 /**
  * location : {
@@ -80,25 +80,18 @@ boo.route = function(location, rules, handler) {
 
 boo.location = function(on_changed) {
   boo.location.onchange = on_changed;
-  function check() {
-    if(boo.location.href != window.location.href) {
-      boo.location.href = window.location.href;
-      boo.location.reload();
-    }
-    return setTimeout(check, 1);
-  };
-  check();
+  window.addEventListener("location-changed", boo.location.reload);
+  window.addEventListener("popstate", boo.location.reload);
 };
 
 boo.location.go = function(url) {
   history.pushState({}, '', url);
-  if (window.location.href == boo.location.href) {
-    boo.location.reload();
-  }
+  window.dispatchEvent(new CustomEvent("location-changed"));
 }
 
 boo.location.replace = function(url) {
   history.replaceState({}, '', url);
+  window.dispatchEvent(new CustomEvent("location-changed"));
 }
 
 boo.location.reload = function() {
@@ -112,10 +105,8 @@ boo.location.encode_query_params = function(params)
 
   for (var key in params) {
     var value = params[key];
-
     if (value === '') {
       encodedParams.push(encodeURIComponent(key));
-
     } else if (value) {
       encodedParams.push(
           encodeURIComponent(key) + '=' +
@@ -128,8 +119,6 @@ boo.location.encode_query_params = function(params)
 boo.location.decode_query_params = function(query)
 {
     var params = {};
-    // Work around a bug in decodeURIComponent where + is not
-    // converted to spaces:
     query = (query || '').replace(/\+/g, '%20');
     var paramList = query.split('&');
     for (var i = 0; i < paramList.length; i++) {
