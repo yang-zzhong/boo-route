@@ -96,8 +96,8 @@ boo.location.replace = function(url) {
 }
 
 boo.location.reload = function() {
-    var query = boo.location.decode_query_params(window.location.search.substr(1));
-    boo.location.onchange(window.location.pathname, query, window.location.hash);
+  var query = boo.location.decode_query_params(window.location.search.substr(1));
+  boo.location.onchange(decodeURIComponent(window.location.pathname), query, decodeURIComponent(window.location.hash));
 }
 
 boo.location.encode_query_params = function(params)
