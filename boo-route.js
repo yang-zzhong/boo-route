@@ -86,12 +86,26 @@ boo.location = function(on_changed) {
 };
 
 boo.location.go = function(url) {
-  history.pushState({}, '', url);
+  history.pushState({}, '', boo.location.full_url(url));
   window.dispatchEvent(new CustomEvent("location-changed"));
 }
 
+boo.location.full_url = function(url) {
+  if (url.length == 0) {
+    url = '/';
+  } else if (url.length > 0 && url[0] != '/') {
+    let base = window.location.pathname;
+    if (base[base.length - 1] != '/') {
+      base += '/';
+    }
+    url = base + url;
+  }
+
+  return url;
+}
+
 boo.location.replace = function(url) {
-  history.replaceState({}, '', url);
+  history.replaceState({}, '', boo.location.full_url(url));
   window.dispatchEvent(new CustomEvent("location-changed"));
 }
 
