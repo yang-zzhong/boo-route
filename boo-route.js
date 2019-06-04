@@ -91,7 +91,7 @@ boo.location.go = function(url) {
 }
 
 boo.location.full_url = function(url) {
-  if (url.length == 0) {
+  if (!url || url && url.length == 0) {
     url = '/';
   } else if (url.length > 0 && url[0] != '/') {
     let base = window.location.pathname;
