@@ -60,7 +60,7 @@ boo.route = function(location, rules, handler) {
   };
 
   if (location.path == "" || location.path == "/") {
-    return handler("__root", {uri: {}, query: location.query_params}, "");
+    return handler("__root", {uri: {}, query: location.query}, "");
   }
   for(var i in rules) {
       var r = match(rules[i].rule, location.path);
@@ -75,7 +75,7 @@ boo.route = function(location, rules, handler) {
         return;
       }
   }
-  handler("__not_found", {uri: {}, query: location.query_params}, "");
+  handler("__not_found", {uri: {}, query: location.query}, "");
 };
 
 boo.location = function(on_changed) {
