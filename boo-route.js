@@ -2,27 +2,23 @@
 window.boo = window.boo || {};
 
 /**
- * location : {
- *   path: "hello/world",
- *   query_params: {}
- * }
- * 
+ * path: hello/world",
  * rules: [{rule: "", page: ""}]
- * handler : function(page, params({uri: {}, query: {}}), tail) {
- *  
- * }
+ * handler: function(page, tail) { }
+ * 
+ * context is boo.location.context
  */
-boo.route = function(location, rules, handler) {
+boo.route = function(path, rules, handler) {
 
   function mm (matched) {
     if (!matched) {
       return null;
     }
-    if (matched['input']) {
+    if (matched.input) {
       matched.splice(0, 1);
-      delete(matched['input']);
-      delete(matched['groups']);
-      delete(matched['index']);
+      delete(matched.input);
+      delete(matched.groups);
+      delete(matched.index);
     }
     return matched;
   }
@@ -33,11 +29,10 @@ boo.route = function(location, rules, handler) {
     return {
       ids: ids,
       regexp: new RegExp('^'+rule.replace(/\//, '\/'))
-    }
-  };
+    };
+  }
 
-  function url_params(params, ids)
-  {
+  function url_params(params, ids) {
     let result = {};
     for(var i in params) {
       result[ids[i].replace(":", "")] = params[i];
@@ -53,29 +48,31 @@ boo.route = function(location, rules, handler) {
       return false;
     }
     let res = {};
-    res.url_params = url_params(mm(matched), r.ids) 
+    res.url_params = url_params(mm(matched), r.ids);
     res.tail = path.replace(r.regexp, "");
-
     return res;
-  };
+  }
 
-  if (location.path == "" || location.path == "/") {
-    return handler("__root", {uri: {}, query: location.query}, "");
+  if (path == "" || path == "/") {
+    boo.location.context.path_params = {};
+    return {page: "__root", tail: ""}
   }
   for(var i in rules) {
-      var r = match(rules[i].rule, location.path);
+      var r = match(rules[i].rule, path);
       if (r !== false) {
-        handler(rules[i].page, {
-          uri: r.url_params,
-          query: location.query
-        }, {
-          path: r.tail,
-          query: location.query
-        });
-        return;
+        boo.location.context.path_params = r.url_params;
+        return {page: rules[i].page, tail: r.tail}
       }
   }
-  handler("__not_found", {uri: {}, query: location.query}, "");
+  let a = path.split('/');
+  while(a[0] === '') {
+    a.splice(0, 1);
+  }
+  boo.location.context.path_params = {};
+  if (a.length == 0) {
+    return {page: "__not_found", tail: ""};
+  }
+  return {page: a[0], tail: "/" + a.join("/")};
 };
 
 boo.location = function(on_changed) {
@@ -88,7 +85,7 @@ boo.location = function(on_changed) {
 boo.location.go = function(url) {
   history.pushState({}, '', boo.location.full_url(url));
   window.dispatchEvent(new CustomEvent("location-changed"));
-}
+};
 
 boo.location.full_url = function(url) {
   if (!url || url && url.length == 0) {
@@ -102,47 +99,45 @@ boo.location.full_url = function(url) {
   }
 
   return url;
-}
+};
 
 boo.location.replace = function(url) {
   history.replaceState({}, '', boo.location.full_url(url));
   window.dispatchEvent(new CustomEvent("location-changed"));
-}
+};
 
 boo.location.reload = function() {
-  var query = boo.location.decode_query_params(window.location.search.substr(1));
-  boo.location.onchange(decodeURIComponent(window.location.pathname), query, decodeURIComponent(window.location.hash));
-}
+  boo.location.context = {
+    query_params: boo.location.decode_query_params(window.location.search.substr(1)),
+    pathname: window.location.pathname,
+    hash: window.location.hash
+  };
+  boo.location.onchange(boo.location.context);
+};
 
-boo.location.encode_query_params = function(params)
-{
+boo.location.encode_query_params = function(params) {
   var encodedParams = [];
-
   for (var key in params) {
     var value = params[key];
     if (value === '') {
       encodedParams.push(encodeURIComponent(key));
     } else if (value) {
-      encodedParams.push(
-          encodeURIComponent(key) + '=' +
-          encodeURIComponent(value.toString()));
+      let p = encodeURIComponent(key) + '=' + encodeURIComponent(value.toString());
+      encodedParams.push(p);
     }
   }
   return encodedParams.join('&');
-}
+};
 
-boo.location.decode_query_params = function(query)
-{
-    var params = {};
-    query = (query || '').replace(/\+/g, '%20');
-    var paramList = query.split('&');
-    for (var i = 0; i < paramList.length; i++) {
-      var param = paramList[i].split('=');
-      if (param[0]) {
-        params[decodeURIComponent(param[0])] =
-            decodeURIComponent(param[1] || '');
-      }
+boo.location.decode_query_params = function(query) {
+  var params = {};
+  query = (query || '').replace(/\+/g, '%20');
+  var paramList = query.split('&');
+  for (var i = 0; i < paramList.length; i++) {
+    var param = paramList[i].split('=');
+    if (param[0]) {
+      params[decodeURIComponent(param[0])] = decodeURIComponent(param[1] || '');
     }
-
-    return params;
-}
+  }
+  return params;
+};
