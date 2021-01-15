@@ -8,7 +8,7 @@ window.boo = window.boo || {};
  * 
  * context is boo.location.context
  */
-boo.route = function(path, rules, handler) {
+boo.route = function(path, rules) {
 
   function mm (matched) {
     if (!matched) {
